@@ -65,6 +65,10 @@ impl Camera {
         image
     }
 
+    fn linear_to_gamma(linear:f32) -> f32 {
+        linear.sqrt()
+    }
+
     pub fn render_point(&self, world: &Vec<Box<dyn Hittable>>, x: u32, y: u32) -> Rgb<u8> {
         let hit_interval = Interval::<f32>::new(0.001, f32::INFINITY);
         let clamp_interval = Interval::<f32>::new(0.0, 0.999);
@@ -75,9 +79,9 @@ impl Camera {
             running_colour += colour / self.pixel_samples as f32;
         }
         Rgb([
-            (clamp_interval.clamp(&running_colour.x) * 256f32) as u8,
-            (clamp_interval.clamp(&running_colour.y) * 256f32) as u8,
-            (clamp_interval.clamp(&running_colour.z) * 256f32) as u8,
+            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.x)) * 256f32) as u8,
+            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.y)) * 256f32) as u8,
+            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.z)) * 256f32) as u8,
         ])
     }
 
