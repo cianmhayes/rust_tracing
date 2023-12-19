@@ -1,4 +1,5 @@
 use crate::interval::Interval;
+use crate::material::{Material, Scattering};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -7,10 +8,17 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f32,
     pub is_front_face: bool,
+    pub scattered: Option<Scattering>,
 }
 
 impl HitRecord {
-    pub fn new(r: &Ray, point: Vec3, normal: Vec3, t: f32) -> HitRecord {
+    pub fn new(
+        r: &Ray,
+        point: Vec3,
+        normal: Vec3,
+        t: f32,
+        scattered: Option<Scattering>,
+    ) -> HitRecord {
         let is_front_face = r.direction.dot(&normal) < 0.0;
         HitRecord {
             point,
@@ -21,6 +29,7 @@ impl HitRecord {
             },
             t,
             is_front_face,
+            scattered,
         }
     }
 }
@@ -29,12 +38,16 @@ pub trait Hittable {
     fn hit(&self, r: &Ray, interval: &Interval<f32>) -> Option<HitRecord>;
 }
 
-pub struct Sphere {
+pub struct Sphere<T> {
     pub center: Vec3,
     pub radius: f32,
+    pub material: T,
 }
 
-impl Hittable for Sphere {
+impl<T> Hittable for Sphere<T>
+where
+    T: Material,
+{
     fn hit(&self, r: &Ray, interval: &Interval<f32>) -> Option<HitRecord> {
         let oc = &r.origin - &self.center;
         let a = r.direction.length_squared();
@@ -57,16 +70,17 @@ impl Hittable for Sphere {
 
         let hit_point = r.at(root);
         let normal = (&hit_point - &self.center) / self.radius;
-        Some(HitRecord::new(r, hit_point, normal, root))
+
+        let scattered = self.material.scatter(r, &normal, &hit_point);
+        Some(HitRecord::new(r, hit_point, normal, root, scattered))
     }
 }
 
 impl Hittable for Vec<Box<dyn Hittable>> {
     fn hit(&self, r: &Ray, interval: &Interval<f32>) -> Option<HitRecord> {
         let mut closest_so_far = interval.max;
-        let mut record:Option<HitRecord> = None;
+        let mut record: Option<HitRecord> = None;
         for hittable in self.iter() {
-
             if let Some(hr) = hittable.hit(r, &Interval::new(interval.min, closest_so_far)) {
                 if hr.t < closest_so_far {
                     closest_so_far = hr.t;

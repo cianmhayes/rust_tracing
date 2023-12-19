@@ -65,7 +65,7 @@ impl Camera {
         image
     }
 
-    fn linear_to_gamma(linear:f32) -> f32 {
+    fn linear_to_gamma(linear: f32) -> f32 {
         linear.sqrt()
     }
 
@@ -108,13 +108,17 @@ impl Camera {
         if remaining_ray_depth == 0 {
             Vec3::new(0.0, 0.0, 0.0)
         } else if let Some(hr) = world.hit(r, hit_interval) {
-            let bounce = &hr.normal + &Vec3::random_unit();
-            Self::get_ray_color(
-                &Ray::new(hr.point.clone(), bounce),
-                world,
-                hit_interval,
-                remaining_ray_depth - 1,
-            ) * 0.5
+            if let Some(scattering) = hr.scattered {
+                scattering.attentuation
+                    * Self::get_ray_color(
+                        &scattering.scattered,
+                        world,
+                        hit_interval,
+                        remaining_ray_depth - 1,
+                    )
+            } else {
+                Vec3::new(0.0, 0.0, 0.0)
+            }
         } else {
             let unit_direction = r.direction.unit_vector();
             let a = 0.5 * (unit_direction.y + 1.0);

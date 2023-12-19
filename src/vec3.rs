@@ -80,6 +80,15 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Vec3 {
         self / self.length()
     }
+
+    pub fn is_near_zero(&self) -> bool {
+        static E:f32 = 1e-8;
+        self.x.abs() < E && self.y.abs() < E && self.z.abs() < E
+    }
+
+    pub fn reflect(&self, normal:&Vec3) -> Vec3 {
+        self - &(normal * (self.dot(normal) * 2.0))
+    }
 }
 
 impl Add for &Vec3 {
