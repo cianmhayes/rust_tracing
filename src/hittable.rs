@@ -3,24 +3,22 @@ use crate::material::{Material, Scattering};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-pub struct HitRecord {
+pub struct Impact {
     pub point: Vec3,
     pub normal: Vec3,
     pub t: f32,
     pub is_front_face: bool,
+}
+
+pub struct HitRecord {
+    pub impact: Impact,
     pub scattered: Option<Scattering>,
 }
 
-impl HitRecord {
-    pub fn new(
-        r: &Ray,
-        point: Vec3,
-        normal: Vec3,
-        t: f32,
-        scattered: Option<Scattering>,
-    ) -> HitRecord {
+impl Impact {
+    pub fn new(r: &Ray, point: Vec3, normal: Vec3, t: f32) -> Self {
         let is_front_face = r.direction.dot(&normal) < 0.0;
-        HitRecord {
+        Impact {
             point,
             normal: if is_front_face {
                 normal
@@ -29,8 +27,13 @@ impl HitRecord {
             },
             t,
             is_front_face,
-            scattered,
         }
+    }
+}
+
+impl HitRecord {
+    pub fn new(impact: Impact, scattered: Option<Scattering>) -> HitRecord {
+        HitRecord { impact, scattered }
     }
 }
 
@@ -71,8 +74,9 @@ where
         let hit_point = r.at(root);
         let normal = (&hit_point - &self.center) / self.radius;
 
-        let scattered = self.material.scatter(r, &normal, &hit_point);
-        Some(HitRecord::new(r, hit_point, normal, root, scattered))
+        let impact = Impact::new(r, hit_point, normal, root);
+        let scattered = self.material.scatter(&r, &impact);
+        Some(HitRecord::new(impact, scattered))
     }
 }
 
@@ -82,8 +86,8 @@ impl Hittable for Vec<Box<dyn Hittable>> {
         let mut record: Option<HitRecord> = None;
         for hittable in self.iter() {
             if let Some(hr) = hittable.hit(r, &Interval::new(interval.min, closest_so_far)) {
-                if hr.t < closest_so_far {
-                    closest_so_far = hr.t;
+                if hr.impact.t < closest_so_far {
+                    closest_so_far = hr.impact.t;
                     record = Some(hr);
                 }
             }

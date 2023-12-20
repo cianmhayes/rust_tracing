@@ -41,7 +41,7 @@ impl Camera {
             - &Vec3::new(0.0f32, 0.0f32, focal_length)
             - &viewport_u / 2.0f32
             - &viewport_v / 2.0f32;
-        let pixel00_loc = &viewport_upper_left + &(&(&pixel_delta_u + &pixel_delta_v) * 0.5f32);
+        let pixel00_loc = &viewport_upper_left + ((&pixel_delta_u + &pixel_delta_v) * 0.5f32);
         Camera {
             image_width,
             image_height,
@@ -109,7 +109,7 @@ impl Camera {
             Vec3::new(0.0, 0.0, 0.0)
         } else if let Some(hr) = world.hit(r, hit_interval) {
             if let Some(scattering) = hr.scattered {
-                scattering.attentuation
+                scattering.attenuation
                     * Self::get_ray_color(
                         &scattering.scattered,
                         world,
@@ -122,7 +122,7 @@ impl Camera {
         } else {
             let unit_direction = r.direction.unit_vector();
             let a = 0.5 * (unit_direction.y + 1.0);
-            &Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + &Vec3::new(0.5, 0.7, 1.0) * a
+            Vec3::new(1.0, 1.0, 1.0) * (1.0 - a) + Vec3::new(0.5, 0.7, 1.0) * a
         }
     }
 }

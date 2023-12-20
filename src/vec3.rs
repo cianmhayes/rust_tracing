@@ -89,12 +89,27 @@ impl Vec3 {
     pub fn reflect(&self, normal:&Vec3) -> Vec3 {
         self - &(normal * (self.dot(normal) * 2.0))
     }
+
+    pub fn refract(&self, normal:&Vec3, etai_over_etat:f32) -> Vec3 {
+        let cos_theta = 1.0f32.min(normal.dot(&(self * -1.0)));
+        let r_out_perp = (self + normal * cos_theta) * etai_over_etat;
+        let r_out_parallel = normal * (-1.0 * (1.0 - r_out_perp.length_squared()).abs().sqrt());
+        r_out_perp + r_out_parallel
+    }
 }
 
 impl Add for &Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
+        Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
+    }
+}
+
+impl Add<Vec3> for &Vec3 {
+    type Output = Vec3;
+
+    fn add(self, rhs: Vec3) -> Self::Output {
         Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
@@ -123,6 +138,14 @@ impl Sub for &Vec3 {
     }
 }
 
+impl Sub<Vec3> for &Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, rhs: Vec3) -> Self::Output {
+        Vec3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+    }
+}
+
 impl Sub for Vec3 {
     type Output = Self;
 
@@ -142,6 +165,13 @@ impl SubAssign for Vec3 {
 impl Mul for &Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: Self) -> Self::Output {
+        Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
+    }
+}
+
+impl Mul<Vec3> for &Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
     }
 }
