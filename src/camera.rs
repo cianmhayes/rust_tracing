@@ -21,24 +21,34 @@ impl Camera {
     pub fn new(
         image_width: u32,
         aspect_ratio: f32,
+        vert_fov: f32,
+        look_from:Vec3,
+        look_at:Vec3,
+        v_up:Vec3,
         pixel_samples: u32,
         max_ray_depth: u32,
     ) -> Self {
         let image_height = 1.max((image_width as f32 / aspect_ratio) as u32);
 
-        let focal_length = 1.0;
-        let viewport_height = 2.0f32;
+        let focal_length = (&look_from - &look_at).length();
+        let theta = vert_fov.to_radians();
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0f32 * focal_length * h;
         let viewport_width = viewport_height * (image_width as f32 / image_height as f32);
-        let center = Vec3::new(0f32, 0f32, 0f32);
 
-        let viewport_u = Vec3::new(viewport_width, 0.0f32, 0.0f32);
-        let viewport_v = Vec3::new(0.0f32, -viewport_height, 0.0f32);
+        let w = (&look_from - &look_at).unit_vector();
+        let u = v_up.cross(&w).unit_vector();
+        let v = w.cross(&u);
+        let center = look_from;
+
+        let viewport_u = u * viewport_width;
+        let viewport_v = v * (viewport_height * -1.0);
 
         let pixel_delta_u = &viewport_u / image_width as f32;
         let pixel_delta_v = &viewport_v / image_height as f32;
 
         let viewport_upper_left = &center
-            - &Vec3::new(0.0f32, 0.0f32, focal_length)
+            - (w * focal_length)
             - &viewport_u / 2.0f32
             - &viewport_v / 2.0f32;
         let pixel00_loc = &viewport_upper_left + ((&pixel_delta_u + &pixel_delta_v) * 0.5f32);
@@ -52,6 +62,14 @@ impl Camera {
             pixel_samples,
             max_ray_depth,
         }
+    }
+
+    pub fn default_v_up() -> Vec3 {
+        Vec3::new(0.0,1.0,0.0)
+    }
+
+    pub fn default_look_at() -> Vec3 {
+        Vec3::new(0.0, 0.0, -1.0)
     }
 
     pub fn render(&self, world: &Vec<Box<dyn Hittable>>) -> RgbImage {

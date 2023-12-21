@@ -17,11 +17,20 @@ mod vec3;
 use camera::Camera;
 use hittable::{Hittable, Sphere};
 use interval::Interval;
-use material::{Lambertian, Metal, Dielectric};
+use material::{Dielectric, Lambertian, Metal};
 use vec3::Vec3;
 
 fn minimal_make_image() -> RgbImage {
-    let cam = Camera::new(400, 16.0 / 9.0, 20, 100);
+    let cam = Camera::new(
+        400,
+        16.0 / 9.0,
+        20.0f32,
+        Vec3::new(-2.0, 2.0, 1.0),
+        Camera::default_look_at(),
+        Camera::default_v_up(),
+        20,
+        100,
+    );
     let world: Vec<Box<dyn Hittable>> = vec![
         Box::new(Sphere {
             center: Vec3::new(0.0, -100.5, -1.0),
