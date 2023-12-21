@@ -101,7 +101,8 @@ impl Material for Dielectric {
         let cos_theta = 1.0f32.min(impact.normal.dot(&r.direction.unit_vector()));
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
-        let should_reflect= cannot_refract || ( impact.is_front_face && Self::get_random_reflection(cos_theta, refraction_ratio));
+        let should_reflect = cannot_refract
+            || (impact.is_front_face && Self::get_random_reflection(cos_theta, refraction_ratio));
         let direction = if cannot_refract {
             r.direction.reflect(&impact.normal)
         } else {

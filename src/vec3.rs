@@ -23,7 +23,7 @@ impl Vec3 {
         }
     }
 
-    pub fn random_in_range(min:f32, max:f32) -> Self {
+    pub fn random_in_range(min: f32, max: f32) -> Self {
         let mut rng = rand::thread_rng();
         let dist = Uniform::new_inclusive(min, max);
         Vec3 {
@@ -44,11 +44,22 @@ impl Vec3 {
         }
     }
 
+    pub fn random_in_unit_disk() -> Self {
+        let mut rng = rand::thread_rng();
+        let dist = Uniform::new_inclusive(-1.0f32, 1.0f32);
+        loop {
+            let v = Vec3::new(rng.sample(dist), rng.sample(dist), 0.0);
+            if v.length_squared() < 1.0 {
+                return v;
+            }
+        }
+    }
+
     pub fn random_unit() -> Self {
         Self::random_in_unit_sphere().unit_vector()
     }
 
-    pub fn random_unit_on_hemisphere(other:&Self) -> Self {
+    pub fn random_unit_on_hemisphere(other: &Self) -> Self {
         let random_unit = Self::random_unit();
         if other.dot(&random_unit) > 0.0 {
             random_unit
@@ -82,15 +93,15 @@ impl Vec3 {
     }
 
     pub fn is_near_zero(&self) -> bool {
-        static E:f32 = 1e-8;
+        static E: f32 = 1e-8;
         self.x.abs() < E && self.y.abs() < E && self.z.abs() < E
     }
 
-    pub fn reflect(&self, normal:&Vec3) -> Vec3 {
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
         self - &(normal * (self.dot(normal) * 2.0))
     }
 
-    pub fn refract(&self, normal:&Vec3, etai_over_etat:f32) -> Vec3 {
+    pub fn refract(&self, normal: &Vec3, etai_over_etat: f32) -> Vec3 {
         let cos_theta = 1.0f32.min(normal.dot(&(self * -1.0)));
         let r_out_perp = (self + normal * cos_theta) * etai_over_etat;
         let r_out_parallel = normal * (-1.0 * (1.0 - r_out_perp.length_squared()).abs().sqrt());

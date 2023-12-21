@@ -25,6 +25,8 @@ fn minimal_make_image() -> RgbImage {
         400,
         16.0 / 9.0,
         20.0f32,
+        10.0,
+        3.4,
         Vec3::new(-2.0, 2.0, 1.0),
         Camera::default_look_at(),
         Camera::default_v_up(),
