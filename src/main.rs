@@ -11,10 +11,11 @@ mod camera;
 mod hittable;
 mod interval;
 mod material;
+mod numeric_utilities;
 mod ray;
 mod vec3;
 
-use camera::Camera;
+use camera::CameraBuilder;
 use hittable::{Hittable, Sphere};
 use interval::Interval;
 use material::{Dielectric, Lambertian, Metal};
@@ -28,18 +29,10 @@ fn get_rand() -> f32 {
 }
 
 fn make_image() -> RgbImage {
-    let cam = Camera::new(
-        1200,
-        16.0 / 9.0,
-        20.0f32,
-        0.6,
-        10.0,
-        Vec3::new(13.0, 2.0, 3.0),
-        Vec3::new(0.0, 0.0, 0.0),
-        Camera::default_v_up(),
-        500,
-        50,
-    );
+    let cam = CameraBuilder::new(400, 16.0 / 9.0)
+        .look_from(Vec3::new(13.0, 2.0, 3.0))
+        .build();
+
     let mut world: Vec<Box<dyn Hittable>> = vec![
         Box::new(Sphere {
             // ground
@@ -65,11 +58,15 @@ fn make_image() -> RgbImage {
     ];
     for a in -11..11 {
         for b in -11..11 {
-            let center = Vec3::new(a as f32 + 0.9 * get_rand(), 0.2, b as f32 + 0.9 * get_rand());
+            let center = Vec3::new(
+                a as f32 + 0.9 * get_rand(),
+                0.2,
+                b as f32 + 0.9 * get_rand(),
+            );
 
             if (&center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 let choose_mat = get_rand();
-                if (choose_mat < 0.8) {
+                if choose_mat < 0.8 {
                     let albedo = Vec3::random() * Vec3::random();
                     world.push(Box::new(Sphere {
                         center,
@@ -98,6 +95,6 @@ fn make_image() -> RgbImage {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    make_image().save("test.jpg")?;
+    make_image().save("test2.jpg")?;
     Ok(())
 }

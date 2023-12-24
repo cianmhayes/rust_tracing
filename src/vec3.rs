@@ -2,7 +2,7 @@ use rand::distributions::{Standard, Uniform};
 use rand::prelude::*;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,

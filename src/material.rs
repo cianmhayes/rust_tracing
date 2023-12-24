@@ -1,8 +1,7 @@
 use crate::hittable::Impact;
+use crate::numeric_utilities;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
-use rand::distributions::Standard;
-use rand::prelude::*;
 
 pub struct Scattering {
     pub scattered: Ray,
@@ -79,13 +78,9 @@ impl Dielectric {
         r0 + (1.0 - r0) * (1.0 - cos_theta).powi(5)
     }
 
-    fn get_rand() -> f32 {
-        rand::thread_rng().sample(Standard)
-    }
-
     fn get_random_reflection(cos_theta: f32, refraction_ratio: f32) -> bool {
-        let reflectance = Self::refelectance(cos_theta, refraction_ratio) - 1.0;
-        let rand = Self::get_rand();
+        let reflectance = Self::refelectance(cos_theta, refraction_ratio);
+        let rand = numeric_utilities::get_rand_float();
         reflectance > rand
     }
 }
@@ -98,12 +93,12 @@ impl Material for Dielectric {
             self.refractive_index
         };
 
-        let cos_theta = 1.0f32.min(impact.normal.dot(&r.direction.unit_vector()));
+        let cos_theta = 1.0f32.min(impact.normal.dot(&(r.direction.unit_vector() * -1.0)));
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = refraction_ratio * sin_theta > 1.0;
         let should_reflect = cannot_refract
             || (impact.is_front_face && Self::get_random_reflection(cos_theta, refraction_ratio));
-        let direction = if cannot_refract {
+        let direction = if should_reflect {
             r.direction.reflect(&impact.normal)
         } else {
             r.direction

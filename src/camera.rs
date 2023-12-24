@@ -1,10 +1,9 @@
+use crate::numeric_utilities;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::Hittable;
 use crate::Interval;
 use image::{Rgb, RgbImage};
-use rand::distributions::Standard;
-use rand::prelude::*;
 
 pub struct Camera {
     image_width: u32,
@@ -18,6 +17,101 @@ pub struct Camera {
     defocus_disk_v: Vec3,
     pixel_samples: u32,
     max_ray_depth: u32,
+}
+
+pub struct CameraBuilder {
+    image_width: u32,
+    aspect_ratio: f32,
+    vert_fov: f32,
+    defocus_angle: f32,
+    focal_dist: f32,
+    look_from: Vec3,
+    look_at: Vec3,
+    v_up: Vec3,
+    pixel_samples: u32,
+    max_ray_depth: u32,
+}
+
+impl CameraBuilder {
+    pub fn new(image_width: u32, aspect_ratio: f32) -> Self {
+        CameraBuilder {
+            image_width,
+            aspect_ratio,
+            vert_fov: 20.0,
+            defocus_angle: 0.6,
+            focal_dist: 10.0,
+            look_from: Vec3::new(0.0, 0.0, 0.0),
+            look_at: Vec3::new(0.0, 0.0, -1.0),
+            v_up: Vec3::new(0.0, 1.0, 0.0),
+            pixel_samples: 500,
+            max_ray_depth: 50,
+        }
+    }
+
+    pub fn image_width(mut self, image_width: u32) -> Self {
+        self.image_width = image_width;
+        self
+    }
+
+    pub fn aspect_ratio(mut self, aspect_ratio: f32) -> Self {
+        self.aspect_ratio = aspect_ratio;
+        self
+    }
+
+    pub fn vert_fov(mut self, vert_fov: f32) -> Self {
+        self.vert_fov = vert_fov;
+        self
+    }
+
+    pub fn defocus_angle(mut self, defocus_angle: f32) -> Self {
+        self.defocus_angle = defocus_angle;
+        self
+    }
+
+    pub fn focal_dist(mut self, focal_dist: f32) -> Self {
+        self.focal_dist = focal_dist;
+        self
+    }
+
+    pub fn look_from(mut self, look_from: Vec3) -> Self {
+        self.look_from = look_from;
+        self
+    }
+
+    pub fn look_at(mut self, look_at: Vec3) -> Self {
+        self.look_at = look_at;
+        self
+    }
+
+    pub fn v_up(mut self, v_up: Vec3) -> Self {
+        self.v_up = v_up;
+        self
+    }
+
+    pub fn pixel_samples(mut self, pixel_samples: u32) -> Self {
+        self.pixel_samples = pixel_samples;
+        self
+    }
+
+    pub fn max_ray_depth(mut self, max_ray_depth: u32) -> Self {
+        self.max_ray_depth = max_ray_depth;
+        self
+    }
+
+    pub fn build(self) -> Camera {
+        Camera::new(
+            self.image_width,
+            self.aspect_ratio,
+            self.vert_fov,
+            self.defocus_angle,
+            self.focal_dist,
+            self.look_from,
+            self.look_at,
+            self.v_up,
+            self.pixel_samples,
+            self.max_ray_depth,
+        )
+    }
 }
 
 impl Camera {
@@ -74,14 +168,6 @@ impl Camera {
         }
     }
 
-    pub fn default_v_up() -> Vec3 {
-        Vec3::new(0.0, 1.0, 0.0)
-    }
-
-    pub fn default_look_at() -> Vec3 {
-        Vec3::new(0.0, 0.0, -1.0)
-    }
-
     pub fn render(&self, world: &Vec<Box<dyn Hittable>>) -> RgbImage {
         let mut image = RgbImage::new(self.image_width, self.image_height);
         for y in 0..self.image_height {
@@ -91,10 +177,6 @@ impl Camera {
             }
         }
         image
-    }
-
-    fn linear_to_gamma(linear: f32) -> f32 {
-        linear.sqrt()
     }
 
     pub fn render_point(&self, world: &Vec<Box<dyn Hittable>>, x: u32, y: u32) -> Rgb<u8> {
@@ -107,21 +189,20 @@ impl Camera {
             running_colour += colour / self.pixel_samples as f32;
         }
         Rgb([
-            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.x)) * 256f32) as u8,
-            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.y)) * 256f32) as u8,
-            (clamp_interval.clamp(&Self::linear_to_gamma(running_colour.z)) * 256f32) as u8,
+            (clamp_interval.clamp(&numeric_utilities::linear_to_gamma(running_colour.x)) * 256f32)
+                as u8,
+            (clamp_interval.clamp(&numeric_utilities::linear_to_gamma(running_colour.y)) * 256f32)
+                as u8,
+            (clamp_interval.clamp(&numeric_utilities::linear_to_gamma(running_colour.z)) * 256f32)
+                as u8,
         ])
-    }
-
-    fn get_rand() -> f32 {
-        rand::thread_rng().sample(Standard)
     }
 
     fn get_ray(&self, x: u32, y: u32) -> Ray {
         let mut pixel_center =
             &self.pixel00_loc + &(&self.pixel_delta_u * x as f32 + &self.pixel_delta_v * y as f32);
-        pixel_center += &self.pixel_delta_u * (-0.5 + Self::get_rand());
-        pixel_center += &self.pixel_delta_v * (-0.5 + Self::get_rand());
+        pixel_center += &self.pixel_delta_u * (-0.5 + numeric_utilities::get_rand_float());
+        pixel_center += &self.pixel_delta_v * (-0.5 + numeric_utilities::get_rand_float());
 
         let ray_origin = if self.defocus_angle <= 0.0 {
             self.center.clone()
